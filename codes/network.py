@@ -36,7 +36,7 @@ def create_agents(agents, level_f='../'):
     EI_dict = get_initial_EI(level_f=level_f)
     return
 
-def generate_EI_table(formula_s=None, level_f='../'):
+def generate_EI(formula_s=None, level_f='../'):
     '''
     Returns a DataFrame with the mean quantity of every product consumed by the participant.
     --> The value should be divided by 4, so it is a weekly value. To make it daily divide by 28.
