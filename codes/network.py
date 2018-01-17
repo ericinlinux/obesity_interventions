@@ -5,7 +5,7 @@ import pandas as pd
 import os
 import re
 
-def generate_network(wave=1, variable='DI_Com_Network', data_f='../data/'):
+def generate_network(level_f='../data/'):
     '''
     background = pd.read_csv(data_f+'background.csv', sep=';', header=0)
     bmi = pd.read_csv(data_f+'bmi.csv', sep=';', header=0)
@@ -21,7 +21,7 @@ def generate_network(wave=1, variable='DI_Com_Network', data_f='../data/'):
 
 
 
-def create_agents(agents, level_f='../'):
+def create_agents(graph, level_f='../'):
     '''
     Each agent need the following information:
         |-- gender
@@ -62,16 +62,9 @@ def generate_EI(formula_s=None, level_f='../'):
     list_products.remove('Child_Bos')
     consumption = consumption[list_products]
 
-    # Mean for 4 weeks of consumption (maybe divide by 28 days?)
-    # To be done later, with the values for each product
-    # consumption = consumption/4
-
     # Save
     consumption.to_csv(level_f+'results/EI.csv')
 
-    #return sum_consumption
-
-    
     # Read formula to calculate the weight for the connections
     if formula_s is None:
         formula = json.loads(open(level_f+'settings/agents.json').read())
@@ -86,6 +79,12 @@ def generate_EI(formula_s=None, level_f='../'):
         consumption[item] = consumption[item]*w
 
     EI_dict = dict(consumption.sum(axis=1))
+    
+    # Mean for 4 weeks of consumption (maybe divide by 28 days?)
+    # To be done later, with the values for each product
+    # consumption = consumption/4
+
+    # Save results per child
     consumption.sum(axis=1).to_csv(level_f+'results/EI_per_child.csv')
 
     return EI_dict
