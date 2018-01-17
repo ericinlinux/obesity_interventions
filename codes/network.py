@@ -3,6 +3,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import os
+import re
 
 def generate_network(wave=1, variable='DI_Com_Network', data_f='../data/'):
     '''
@@ -20,7 +21,7 @@ def generate_network(wave=1, variable='DI_Com_Network', data_f='../data/'):
 
 
 
-def create_agents(agents):
+def create_agents(agents, level_f='../'):
     '''
     Each agent need the following information:
         |-- gender
@@ -32,7 +33,62 @@ def create_agents(agents):
         |-- Env
         |-- PA
     '''
+    EI_dict = get_initial_EI(level_f=level_f)
     return
+
+def generate_EI_table(formula_s=None, level_f='../'):
+    '''
+    Returns a DataFrame with the mean quantity of every product consumed by the participant.
+    --> The value should be divided by 4, so it is a weekly value. To make it daily divide by 28.
+    '''
+
+    diet_data = pd.read_csv(level_f+'data/dietary_intake.csv', sep=';', header=0)
+    # Variables not used for EI
+    remove_columns = ['BMI_W2', 'BMI_W4', 'zBMI_W2', 'zBMI_W4', 'BMIcor_W2', 'BMIcor_W4' ]
+    # List of products in the intake behavior (foor and beveries)
+    # Remove the time stamps and VAS
+    list_products = [(re.split('_', x))[5] for x in list(diet_data.columns)[1:-6]]
+    list_products = list(set(list_products) - {'TriggerDate', 'TriggerTime', 'VAS', 'Weekend'})
+
+    # Generates the column for each product with the sum for the 4 weeks
+    for product in list_products:
+        list_columns = list(diet_data.filter(regex=(".*"+product)).columns)
+        diet_data[product] = diet_data.filter(regex=(".*"+product)).sum(axis=1)
+    # Add the id of the children as a column
+    list_products.append('Child_Bos')
+    # Select the columns with the total of the products and the ids, fix the index and remove the column with the ids
+    consumption = diet_data[list_products]
+    consumption.index = consumption.Child_Bos
+    list_products.remove('Child_Bos')
+    consumption = consumption[list_products]
+
+    # Mean for 4 weeks of consumption (maybe divide by 28 days?)
+    # To be done later, with the values for each product
+    # consumption = consumption/4
+
+    # Save
+    consumption.to_csv(level_f+'results/EI.csv')
+
+    #return sum_consumption
+
+    
+    # Read formula to calculate the weight for the connections
+    if formula_s is None:
+        formula = json.loads(open(level_f+'settings/agents.json').read())
+    else:
+        try:
+            formula = json.loads(formula_s)
+        except:
+            print('Formula provided is corrupted.')
+            return
+
+    for item, w in formula.items():
+        consumption[item] = consumption[item]*w
+
+    EI_dict = dict(consumption.sum(axis=1))
+    consumption.sum(axis=1).to_csv(level_f+'results/EI_per_child.csv')
+
+    return EI_dict
 
 def create_connections(graph, formula_s=None, level_f='../'):
     '''
