@@ -20,7 +20,7 @@ def generate_network(level_f='../'):
 
     create_connections(graph=graph, level_f=level_f)
     create_agents(graph=graph, level_f=level_f)
-
+    nx.write_gexf(graph, level_f+'results/graph.gexf')
     return graph
 
 
@@ -293,3 +293,7 @@ def create_connections(graph, formula_s=None, level_f='../'):
     connections_df.to_csv(level_f+'results/connections.csv')
 
     return graph
+
+if __name__ == "__main__":
+    # execute only if run as a script
+    graph = generate_network()
