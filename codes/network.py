@@ -1,11 +1,12 @@
 import json
 import networkx as nx
 import numpy as np
-import pandas as pd
 import os
+import pandas as pd
 import re
+import random
 
-def generate_network(level_f='../data/'):
+def generate_network(level_f='../'):
     '''
     background = pd.read_csv(data_f+'background.csv', sep=';', header=0)
     bmi = pd.read_csv(data_f+'bmi.csv', sep=';', header=0)
@@ -15,9 +16,12 @@ def generate_network(level_f='../data/'):
     pp = pd.read_csv(data_f+'pp.csv', sep=';', header=0)
     pp['sum_waves'] = pp.parti_W1+pp.parti_W2+pp.parti_W3+pp.parti_W4
     '''
-    
+    graph = nx.DiGraph()
 
-    create_connections(graph,formula)
+    create_connections(graph=graph, level_f=level_f)
+    create_agents(graph=graph, level_f=level_f)
+
+    return graph
 
 
 
@@ -39,14 +43,55 @@ def create_agents(graph, level_f='../'):
     environment_dict = generate_environment(level_f=level_f)
     bmi_dict, height_dict, weight_dict = generate_demographics(level_f=level_f)
     
-    return
+    nx.set_node_attributes(graph, values=EI_dict, name='EI')
+    nx.set_node_attributes(graph, values=PA_dict, name='PA')
+    nx.set_node_attributes(graph, values=gender_dict, name='gender')
+    nx.set_node_attributes(graph, values=age_dict, name='age')
+    nx.set_node_attributes(graph, values=environment_dict, name='env')
+    nx.set_node_attributes(graph, values=bmi_dict, name='bmi')
+    nx.set_node_attributes(graph, values=height_dict, name='height')
+    nx.set_node_attributes(graph, values=weight_dict, name='weight')
+
+    return graph
 
 def generate_demographics(level_f='../'):
+    bmi = pd.read_csv(level_f+'data/bmi.csv', sep=';', header=0)
+    pp = pd.read_csv(level_f+'data/pp.csv', sep=';', header=0)
+    list_participants = list(set(pp.Child_Bosse))
     
-    return
+    # Generate dictionaries
+    bmi_dict = {}
+    weight_dict = {}
+    length_m_dict = {}
+    for person in list_participants:
+        # Number of nan values
+        num_nan = bmi[(bmi.Child_Bosse == person) & (pd.isna(bmi.BMI))].shape[0]
+        if  num_nan == 0:
+            bmi_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==4)]['BMI'].values[0]
+            weight_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==4)]['Weight_kg'].values[0]
+            length_m_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==4)]['Lenght_m'].values[0]
+        # Missing data
+        elif num_nan == 2:
+            bmi_dict[person] = np.nan
+            weight_dict[person] = np.nan
+            length_m_dict[person] = np.nan
+        elif num_nan == 1:
+            # Test if the nan is in wave 2 or 4; if wave_missing = 1 then wave 2 is missing. Wave 4 otherwise
+            wave_missing = bmi[(bmi.Child_Bosse == person) & (pd.isna(bmi.BMI)) & (bmi.Wave == 2)].shape[0]
+            if wave_missing == 1:
+                bmi_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==4)]['BMI'].values[0]
+                weight_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==4)]['Weight_kg'].values[0]
+                length_m_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==4)]['Lenght_m'].values[0]
+            else:
+                bmi_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==2)]['BMI'].values[0]
+                weight_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==2)]['Weight_kg'].values[0]
+                length_m_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==2)]['Lenght_m'].values[0]
+        
+
+    return bmi_dict, length_m_dict, weight_dict 
 
 
-def generate_environment(level_f=level_f):
+def generate_environment(level_f='../'):
     '''
     The environment variable is going to be generated randomly by now, but should be replaced later
     '''
