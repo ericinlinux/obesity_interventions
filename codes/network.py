@@ -33,8 +33,76 @@ def create_agents(graph, level_f='../'):
         |-- Env
         |-- PA
     '''
-    EI_dict = get_initial_EI(level_f=level_f)
+    EI_dict = generate_EI(level_f=level_f)
+    PA_dict = generate_PA(level_f=level_f)
+    gender_dict, age_dict = generate_basic(level_f=level_f)
+    environment_dict = generate_environment(level_f=level_f)
+    bmi_dict, height_dict, weight_dict = generate_demographics(level_f=level_f)
+    
     return
+
+def generate_demographics(level_f='../'):
+    
+    return
+
+
+def generate_environment(level_f=level_f):
+    '''
+    The environment variable is going to be generated randomly by now, but should be replaced later
+    '''
+    pp = pd.read_csv(level_f+'data/pp.csv', sep=';', header=0)
+    list_participants = list(set(pp.Child_Bosse))
+    # Random generator.
+    environment_dict = {k: random.uniform(0.93, 1.02) for k in list_participants}
+    pd.Series(environment_dict).to_csv(level_f+'results/environment.csv')
+
+    return environment_dict
+
+
+def generate_basic(level_f='../'):
+    '''
+    Static values. Age changes a little. Used the mean.
+    '''
+    background = pd.read_csv(level_f+'data/background.csv', sep=';', header=0)
+    gender_df = background.groupby(['Child_Bosse']).mean()['Gender']
+    age_df = background.groupby(['Child_Bosse']).mean()['Age']
+    gender_df.to_csv(level_f+'results/gender.csv')
+    age_df.to_csv(level_f+'results/age.csv')
+    
+    return dict(gender_df), dict(age_df)
+
+def generate_PA(metric='mvpa', level_f='../'):
+    '''
+    NetworkClass:       Does the class reach the treshold of >60% of participation
+    Steps:              observed mean daily steps count per week    
+    Minutes_MVPA: :     observed mean daily minutes of moderate to vigorous physical activity per week      
+    Steps_imp1:         simple imputation for missing Steps data    
+    MVPA_imp1:          simple imputation for missing Minutes_MVPA data 
+    Steps_ML_imp1:      single multilevel imputation for Steps data 
+    Minutes_MVPA_ML_imp1:   single multilevel imputation for Minutes_MVPA data
+
+    |- inputs:
+        |-- metric: steps or mvpa
+    |- outputs:
+        |-- dictionary with steps or minutes
+
+    '''
+    fitbit = pd.read_csv(level_f+'data/fitbit.csv', sep=';', header=0)
+    
+    # Mean of minutes from moderate to vigorous activity and steps (all imputed)
+    minutes_MVPA_df = fitbit.groupby(['Child_Bosse']).mean()['Minutes_MVPA_ML_imp1']
+    steps_df = fitbit.groupby(['Child_Bosse']).mean()['Steps_ML_imp1']
+
+    if metric == 'mvpa':
+        minutes_MVPA_df.to_csv(level_f+'results/mvpa.csv')
+        return dict(minutes_MVPA_df)
+    elif metric == 'steps':
+        steps_df.to_csv(level_f+'results/steps.csv')
+        return dict(steps_df)
+    else:
+        print('Metric not valid! >>>', metric)
+        return False
+
 
 def generate_EI(formula_s=None, level_f='../'):
     '''
