@@ -19,10 +19,29 @@ def generate_network(level_f='../'):
     graph = nx.DiGraph()
 
     create_connections(graph=graph, level_f=level_f)
+
+    print('Nodes after connections: ', len(graph.nodes()))
     create_agents(graph=graph, level_f=level_f)
-    nx.write_gexf(graph, level_f+'results/graph.gexf')
+
+    print('All good so far...')
+    nx.write_gexf(graph, '../results/graph.gexf')
+    
     return graph
 
+
+def fix_float64(orig_dict):
+    '''
+    This function converts the numpy.float64 values from a dictionary to native float type.
+    {k: np.asscalar(item) for k, item in orig_dict.items()}
+    '''
+    new_dict = {}
+    for k, item in orig_dict.items():
+        try:    
+            new_dict[k] = -1.0 if np.isnan(item) else np.asscalar(item)
+        except:
+            new_dict[k] = -1.0
+            #print(k, item)
+    return new_dict
 
 
 def create_agents(graph, level_f='../'):
@@ -30,6 +49,7 @@ def create_agents(graph, level_f='../'):
     Each agent need the following information:
         |-- gender
         |-- age
+        |-- class
         |-- height
         |-- weight
         |-- EI
@@ -39,14 +59,35 @@ def create_agents(graph, level_f='../'):
     '''
     EI_dict = generate_EI(level_f=level_f)
     PA_dict = generate_PA(level_f=level_f)
-    gender_dict, age_dict = generate_basic(level_f=level_f)
+    gender_dict, age_dict, class_dict = generate_basic(level_f=level_f)
     environment_dict = generate_environment(level_f=level_f)
     bmi_dict, height_dict, weight_dict = generate_demographics(level_f=level_f)
     
+    # Fix problems with float64
+    EI_dict = fix_float64(EI_dict)
+    print('EI')
+    PA_dict = fix_float64(PA_dict)
+    print('PA')
+    gender_dict = fix_float64(gender_dict)
+    print('gender')
+    age_dict = fix_float64(age_dict)
+    print('age')
+    class_dict = fix_float64(class_dict)
+    print('class')
+    # environment_dict = fix_float64(environment_dict)
+    # print('env')
+    bmi_dict = fix_float64(bmi_dict)
+    print('bmi')
+    height_dict = fix_float64(height_dict)
+    print('height')
+    weight_dict = fix_float64(weight_dict)
+    print('weight')
+
     nx.set_node_attributes(graph, values=EI_dict, name='EI')
     nx.set_node_attributes(graph, values=PA_dict, name='PA')
     nx.set_node_attributes(graph, values=gender_dict, name='gender')
     nx.set_node_attributes(graph, values=age_dict, name='age')
+    nx.set_node_attributes(graph, values=class_dict, name='class')
     nx.set_node_attributes(graph, values=environment_dict, name='env')
     nx.set_node_attributes(graph, values=bmi_dict, name='bmi')
     nx.set_node_attributes(graph, values=height_dict, name='height')
@@ -86,7 +127,6 @@ def generate_demographics(level_f='../'):
                 bmi_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==2)]['BMI'].values[0]
                 weight_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==2)]['Weight_kg'].values[0]
                 length_m_dict[person] = bmi[(bmi.Child_Bosse == person) & (bmi.Wave==2)]['Lenght_m'].values[0]
-        
 
     return bmi_dict, length_m_dict, weight_dict 
 
@@ -111,10 +151,13 @@ def generate_basic(level_f='../'):
     background = pd.read_csv(level_f+'data/background.csv', sep=';', header=0)
     gender_df = background.groupby(['Child_Bosse']).mean()['Gender']
     age_df = background.groupby(['Child_Bosse']).mean()['Age']
+    class_df = background.groupby(['Child_Bosse']).mean()['Class']    
+    
     gender_df.to_csv(level_f+'results/gender.csv')
     age_df.to_csv(level_f+'results/age.csv')
+    class_df.to_csv(level_f+'results/class.csv')
     
-    return dict(gender_df), dict(age_df)
+    return dict(gender_df), dict(age_df), dict(class_df)
 
 def generate_PA(metric='mvpa', level_f='../'):
     '''
@@ -297,3 +340,4 @@ def create_connections(graph, formula_s=None, level_f='../'):
 if __name__ == "__main__":
     # execute only if run as a script
     graph = generate_network()
+    
