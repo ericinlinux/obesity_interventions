@@ -24,7 +24,13 @@ def generate_network(level_f='../'):
     create_agents(graph=graph, level_f=level_f)
 
     print('All good so far...')
-    nx.write_gexf(graph, '../results/graph.gexf')
+    try:
+        nx.write_gexf(graph, level_f+'results/graph.gexf')
+    except IOError as e:
+        errno, strerror = e.args
+        print("I/O error({0}): {1}".format(errno,strerror))
+        # e can be printed directly without using .args:
+        # print(e)
     
     return graph
 
@@ -59,6 +65,7 @@ def create_agents(graph, level_f='../'):
     '''
     EI_dict = generate_EI(level_f=level_f)
     EI_Kcal_dict = generate_EI_Kcal(level_f=level_f)
+    #print(EI_Kcal_dict)
     PA_dict = generate_PA(level_f=level_f)
     gender_dict, age_dict, class_dict = generate_basic(level_f=level_f)
     environment_dict = generate_environment(level_f=level_f)
@@ -102,6 +109,8 @@ def create_agents(graph, level_f='../'):
 
 def generate_EI_Kcal(level_f='../'):
     ffq = pd.read_csv(level_f+'data/ffq.csv', sep=';', header=0)
+    ffq.index = ffq.Child_Bosse
+    ffq = ffq[['SumKcal_W1', 'SumKcal_W2', 'SumKcal_W3', 'SumKcal_W4']]
     return dict(ffq.mean(axis=1))
 
 

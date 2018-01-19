@@ -1,4 +1,7 @@
-# Data Analysis of MyMovez Project
+# Data Analysis of Obesity Project
+
+This code contains the main functions to generate a network and apply interventions in order to predict future states for a group of people from a survey.
+
 
 ## Structure of NetLogo code
 
