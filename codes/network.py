@@ -18,10 +18,19 @@ def generate_network(level_f='../'):
     '''
     graph = nx.DiGraph()
 
+    print('Create connections...')
     create_connections(graph=graph, level_f=level_f)
 
     print('Nodes after connections: ', len(graph.nodes()))
+
+    print('Create agents...')
     create_agents(graph=graph, level_f=level_f)
+
+    # Comment this if you want to keep all the nodes
+    print('Removing nodes not in the specified classes...')
+    remove_nodes(graph=graph, level_f=level_f)
+
+    print('Nodes remaining after removal: #', len(graph.nodes()))
 
     print('All good so far...')
     try:
@@ -66,7 +75,7 @@ def create_agents(graph, level_f='../'):
     EI_dict = generate_EI(level_f=level_f)
     EI_Kcal_dict = generate_EI_Kcal(level_f=level_f)
     #print(EI_Kcal_dict)
-    PA_dict = generate_PA(level_f=level_f)
+    PA_dict = generate_PA(metric='steps', level_f=level_f)
     gender_dict, age_dict, class_dict = generate_basic(level_f=level_f)
     environment_dict = generate_environment(level_f=level_f)
     bmi_dict, height_dict, weight_dict = generate_demographics(level_f=level_f)
@@ -106,6 +115,19 @@ def create_agents(graph, level_f='../'):
 
     return graph
 
+
+def remove_nodes(graph, level_f='../'):
+    #print('Removing nodes not in the classes selected...')
+    nodes_removed = []
+    file = open(level_f+'settings/class.txt', 'r')
+    list_classes = [int(line) for line in file]
+    for node in graph.nodes():
+        if graph.nodes()[node]['class'] not in list_classes:
+            nodes_removed.append(node)
+    graph.remove_nodes_from(nodes_removed)
+
+    print('Nodes removed: #', len(nodes_removed))
+    return graph
 
 def generate_EI_Kcal(level_f='../'):
     ffq = pd.read_csv(level_f+'data/ffq.csv', sep=';', header=0)
@@ -198,7 +220,9 @@ def generate_PA(metric='mvpa', level_f='../'):
     
     # Mean of minutes from moderate to vigorous activity and steps (all imputed)
     minutes_MVPA_df = fitbit.groupby(['Child_Bosse']).mean()['Minutes_MVPA_ML_imp1']
-    steps_df = fitbit.groupby(['Child_Bosse']).mean()['Steps_ML_imp1']
+
+    # Steps are converted to fit the system. 1.53 (PA) corresponds to 10.000 steps.
+    steps_df = fitbit.groupby(['Child_Bosse']).mean()['Steps_ML_imp1'] * 0.000153
 
     if metric == 'mvpa':
         minutes_MVPA_df.to_csv(level_f+'results/mvpa.csv')

@@ -23,6 +23,8 @@ def select_nodes_vulnerable():
 
 def diffuse_behavior(graph, intervention='none', years=3, level_f='../'):
 	'''
+	Method 1: ignore EI provided by the snacks.
+
 	|- diffuse-behavior (influente_PA or influence_EI?)
 		|-- neighbors -> node
 	|- update
@@ -34,12 +36,14 @@ def diffuse_behavior(graph, intervention='none', years=3, level_f='../'):
 			# Initiate hist vectors
 			for node in graph.nodes():
 				graph.nodes()[node]['PA_hist'] = [graph.nodes()[node]['PA']]
-				graph.nodes()[node]['EI_hist'] = [graph.nodes()[node]['EI_Kcal']]
+				#graph.nodes()[node]['EI_hist'] = [graph.nodes()[node]['EI_Kcal']]
+				EI = graph.nodes()[node]['PA'] * (0.083*graph.nodes()[node]['weight']+0.85)/0.9
+				graph.nodes()[node]['EI_hist'] = [EI]
 				graph.nodes()[node]['BW_hist'] = [graph.nodes()[node]['weight']]
 				graph.nodes()[node]['BMI_hist'] = [graph.nodes()[node]['weight']/(graph.nodes()[node]['height']*graph.nodes()[node]['height'])]
 			continue
-		if t % 365 == 0:
-			print(t)
+		#if t % 365 == 0:
+		#	print(t)
 
 		for node in graph.nodes():
 			# Cummulative influence from neighbors for PA and EI
@@ -82,10 +86,10 @@ def diffuse_behavior(graph, intervention='none', years=3, level_f='../'):
 			if inf_PA_env > 0 and abs(inf_PA_env) > thres_PA_h * PA:
 				PA_new = PA * (1 + I_PA)
 			elif inf_PA_env < 0 and abs(inf_PA_env) < thres_PA_l * PA:
-				PA_new = PA * (1-I_PA)
+				PA_new = PA * (1 - I_PA)
 			else:
 				PA_new = PA
-				
+
 			# For EI
 			if inf_EI_env > 0 and abs(inf_EI_env) > thres_EI_h * EI:
 				EI_new = EI * (1 + I_EI)
