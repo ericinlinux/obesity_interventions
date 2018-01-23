@@ -72,8 +72,8 @@ def create_agents(graph, level_f='../'):
         |-- Env
         |-- PA
     '''
-    EI_dict = generate_EI(level_f=level_f)
-    EI_Kcal_dict = generate_EI_Kcal(level_f=level_f)
+    #EI_dict = generate_EI(level_f=level_f)
+    #EI_Kcal_dict = generate_EI_Kcal(level_f=level_f)
     #print(EI_Kcal_dict)
     PA_dict = generate_PA(metric='steps', level_f=level_f)
     gender_dict, age_dict, class_dict = generate_basic(level_f=level_f)
@@ -81,10 +81,10 @@ def create_agents(graph, level_f='../'):
     bmi_dict, height_dict, weight_dict = generate_demographics(level_f=level_f)
     
     # Fix problems with float64
-    EI_dict = fix_float64(EI_dict)
-    print('EI')
-    EI_Kcal_dict = fix_float64(EI_Kcal_dict)
-    print('EI_Kcal')
+    #EI_dict = fix_float64(EI_dict)
+    #print('EI')
+    #EI_Kcal_dict = fix_float64(EI_Kcal_dict)
+    #print('EI_Kcal')
     PA_dict = fix_float64(PA_dict)
     print('PA')
     gender_dict = fix_float64(gender_dict)
@@ -102,8 +102,8 @@ def create_agents(graph, level_f='../'):
     weight_dict = fix_float64(weight_dict)
     print('weight')
 
-    nx.set_node_attributes(graph, values=EI_dict, name='EI')
-    nx.set_node_attributes(graph, values=EI_Kcal_dict, name='EI_Kcal')
+    #nx.set_node_attributes(graph, values=EI_dict, name='EI')
+    #nx.set_node_attributes(graph, values=EI_Kcal_dict, name='EI_Kcal')
     nx.set_node_attributes(graph, values=PA_dict, name='PA')
     nx.set_node_attributes(graph, values=gender_dict, name='gender')
     nx.set_node_attributes(graph, values=age_dict, name='age')
