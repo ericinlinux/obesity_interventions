@@ -77,7 +77,7 @@ def select_nodes_vulnerable(graph, factor=None, perc=0.1, level_f='../'):
 
 
 # Max influence
-def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obese', level_f='../'):
+def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obese', level_f='../', debug=True):
     '''
     Objective is the variable we want to minize. In the original work it can be min-obese, min-overweight, min-sum-both and min-bw.
         |- min-obese:       sum of BW of people with BMI > 29.9 - sum of ORIGINAL BW of people with BMI > 29.9
@@ -85,14 +85,22 @@ def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obes
         |- min-sum-both:    sum BW of people with BMI > 25 - sum of ORIGINAL BW of people with BMI > 25  
         |- min-bw:          sum BW of all people - sum ORIGINAL BW of all people
     '''
+    if debug:
+        print('\n#######################################')
+        print('Max-influence started!')
+        print('Objective function: ', objective)
+        print('#######################################\n')
+
     list_nodes = list(graph.nodes())
     num_selected = round(len(list_nodes)*perc)
-
+    
+    if debug:
+        print('This max-influence simulation is for a network with {0} nodes and {1} edges'.format(len(graph.nodes()), len(graph.edges())))
+        print('Number of nodes to select: ', num_selected)
+    
     selected_nodes = []
+    
     while len(selected_nodes) < num_selected:
-        # 
-        # copy graph to reset the nodes
-        g = graph.copy()
         
         # check the available nodes in the 
         available_nodes = list(set(list_nodes) - set(selected_nodes))
@@ -100,10 +108,13 @@ def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obes
         impact_nodes = {}
 
         for node in available_nodes:
+            # copy graph to reset the nodes
+            g = graph.copy()
+
             # append without altering selected nodes list...
             temp_list = selected_nodes + [node]
             apply_intervention(g, factor=factor, selected_nodes=temp_list)
-            diffuse_behavior(g, intervention=None, perc=perc, level_f=level_f)
+            diffuse_behavior(g, intervention=None, level_f=level_f, debug=False)
 
             # Get nodes to calculate the average BW
             list_obese=[]
@@ -115,12 +126,19 @@ def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obes
             BW_sum_both = 0
             BW_all = 0
 
+            
             for n in g.nodes():
                 BMI_node = g.nodes()[n]['BMI_hist'][-1]
                 BW_init = g.nodes()[n]['BW_hist'][0]
                 BW_final = g.nodes()[n]['BW_hist'][-1]
                 BW_diff = BW_final - BW_init
-                if BMI_node > 29.9:
+                
+                #if debug:
+                #    print('\tNode {0}: \t BW initial {1}\t BW diff {2}'.format(n, BW_init, BW_diff))
+                
+                #if BMI_node > 29.9:
+                if BMI_node > 20.9:
+                    #print('Found node obese!')
                     list_obese.append(n)
                     list_all.append(n)
                     list_sum_both.append(n)
@@ -129,7 +147,8 @@ def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obes
                     BW_all += BW_diff
                     BW_sum_both += BW_diff
 
-                elif BMI_node > 25 and BMI_node <= 29.9:
+                #elif BMI_node > 25 and BMI_node <= 29.9:
+                elif BMI_node > 19.0 and BMI_node <= 20.9:
                     list_overweight.append(n)
                     list_all.append(n)
                     list_sum_both.append(n)
@@ -140,6 +159,10 @@ def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obes
                 else:
                     list_all.append(n)
                     BW_all += BW_diff
+
+            # Sum up the impacts caused in the network
+            if debug:
+                print('Impact node #{0}: \tobese: {1:.4f} \toverweight: {2:.4f} \tboth: {3:.4f} \tall: {4:.4f} '.format(node, BW_obese, BW_overweight, BW_sum_both, BW_all))
 
             if objective == 'min-obese':
                 impact_nodes[node] = BW_obese
@@ -152,13 +175,20 @@ def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obes
 
         # Get the nodes sorted by the BW
         keys_sorted = sorted(impact_nodes, key=impact_nodes.get, reverse=False)
-
+        
+        if debug:
+            print('Keys in order of impact: ', keys_sorted)
+        
         selected_nodes.append(keys_sorted[0])
 
+        if debug:
+            print('Node #{0} selected: {1} with an BW impact of {2}!\n'.format(len(selected_nodes), keys_sorted[0], impact_nodes[keys_sorted[0]]))
+    if debug:
+        print('Applying interventions for the nodes in the list: {}\n'.format(selected_nodes))
     return apply_intervention(graph, factor=factor, selected_nodes=selected_nodes)
 
 
-def diffuse_behavior(graph, intervention=None, factor=None, years=2, perc=0.1, level_f='../'):
+def diffuse_behavior(graph, intervention=None, factor=None, objective='min-overweight', years=2, perc=0.1, level_f='../', debug=True):
     '''
     Method 1: ignore EI provided by the snacks.
 
@@ -191,12 +221,16 @@ def diffuse_behavior(graph, intervention=None, factor=None, years=2, perc=0.1, l
                     select_nodes_high_risk(graph=graph, factor=factor, perc=perc, level_f=level_f)
                 elif intervention == 'vulnerable':
                     select_nodes_vulnerable(graph=graph, factor=factor, perc=perc, level_f=level_f)
+                elif intervention == 'max-influence':
+                    select_nodes_max_influence(graph=graph, factor=factor, objective=objective, perc=perc, level_f=level_f)
                 else:
                     print('Wrong intervention ({}) called!'.format(intervention))
             else:
-                print('Simulation without interventions.')
+                if debug:
+                    print('Simulation without interventions.')
             
-            print('Cluster contains {0} nodes and {1} edges!'.format(len(graph.nodes()), len(graph.edges())))
+            if debug:
+                print('Cluster contains {0} nodes and {1} edges!'.format(len(graph.nodes()), len(graph.edges())))
 
             continue
 
