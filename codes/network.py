@@ -118,15 +118,20 @@ def create_agents(graph, level_f='../'):
 
 def remove_nodes(graph, level_f='../'):
     #print('Removing nodes not in the classes selected...')
-    nodes_removed = []
+    nodes_removed_class = []
+    nodes_removed_na = []
     file = open(level_f+'settings/class.txt', 'r')
     list_classes = [int(line) for line in file]
     for node in graph.nodes():
         if graph.nodes()[node]['class'] not in list_classes:
-            nodes_removed.append(node)
-    graph.remove_nodes_from(nodes_removed)
+            nodes_removed_class.append(node)
+        elif graph.nodes()[node]['bmi'] == -1:
+            nodes_removed_na.append(node)
+    graph.remove_nodes_from(nodes_removed_class)
+    graph.remove_nodes_from(nodes_removed_na)
 
-    print('Nodes removed: #', len(nodes_removed))
+    print('Nodes removed for not being in the selected classes: #', len(nodes_removed_class))
+    print('Nodes removed for not having data for BMI: #', len(nodes_removed_na))
     return graph
 
 def generate_EI_Kcal(level_f='../'):

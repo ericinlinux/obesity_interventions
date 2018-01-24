@@ -148,7 +148,7 @@ def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obes
                     BW_sum_both += BW_diff
 
                 #elif BMI_node > 25 and BMI_node <= 29.9:
-                elif BMI_node > 19.0 and BMI_node <= 20.9:
+                elif BMI_node > 18.0 and BMI_node <= 20.9:
                     list_overweight.append(n)
                     list_all.append(n)
                     list_sum_both.append(n)
