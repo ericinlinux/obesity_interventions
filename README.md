@@ -1,6 +1,6 @@
 # Data Analysis of Obesity Project
 
-This code contains the main functions to generate a network and apply interventions in order to predict future states for a group of people from a survey. The code is a replica of the netlogo code provided by [1]. 
+This code contains the main functions and notebooks to generate a network and apply interventions in order to predict future states for a group of participants in an obesity project. The code is a replica of the netlogo code provided by [1] with adjustments and calibrations. 
 
 The main concern of this project is to understand, simulate and apply interventions in a social network in order to improve the lifestyle of a population of friends/colleagues/family.
 
@@ -91,6 +91,7 @@ Each intervention that generates random nodes is run 100 times to garantee that 
 # References 
 
 [1] Beheshti, Rahmatollah, Mehdi Jalalpour, and Thomas A. Glass. "Comparing methods of targeting obesity interventions in populations: An agent-based simulation." SSM-Population Health 3 (2017): 211-218.
+
 [2] Giabbanelli, Philippe J., et al. "Modeling the influence of social networks and environment on energy balance and obesity." Journal of Computational Science 3.1 (2012): 17-27.
 
 
