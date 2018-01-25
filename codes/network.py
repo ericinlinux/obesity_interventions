@@ -293,7 +293,7 @@ def generate_EI(formula_s=None, level_f='../'):
 
     return EI_dict
 
-def create_connections(graph, formula_s=None, level_f='../'):
+def create_connections(graph, formula_s=None, waves='all', level_f='../'):
     '''
     graph: DiGraph
     formula_s: string containing a json with the weights for each variable
@@ -338,7 +338,7 @@ def create_connections(graph, formula_s=None, level_f='../'):
 
     # Read the file with the nominations from the participants and adapt the labels for the columns
     nominations = pd.read_csv(level_f+'data/nominations.csv', sep=';', header=0)
-    nominations.columns = ['class', 'child', 'wave', 'variable', 'class_nominated', 'nominated', 'same_class']
+    # nominations.columns = ['class', 'child', 'wave', 'variable', 'class_nominated', 'nominated', 'same_class']
 
     # Read formula to calculate the weight for the connections
     if formula_s is None:
