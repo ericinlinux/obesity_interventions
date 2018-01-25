@@ -22,8 +22,9 @@ def generate_network(level_f='../'):
     create_connections(graph=graph, level_f=level_f)
 
     print('Nodes after connections: ', len(graph.nodes()))
+    print('Edges created : ', len(graph.edges()))
 
-    print('Create agents...')
+    print('\nCreate agents...')
     create_agents(graph=graph, level_f=level_f)
 
     # Comment this if you want to keep all the nodes
@@ -32,7 +33,7 @@ def generate_network(level_f='../'):
 
     print('Nodes remaining after removal: #', len(graph.nodes()))
 
-    print('All good so far...')
+    
     try:
         nx.write_gexf(graph, level_f+'results/graph.gexf')
     except IOError as e:
@@ -41,6 +42,9 @@ def generate_network(level_f='../'):
         # e can be printed directly without using .args:
         # print(e)
     
+    print('###############################################################')
+    print('Graph generated successfuly!')
+    print('###############################################################\n')
     return graph
 
 
