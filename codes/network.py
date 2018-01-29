@@ -131,6 +131,7 @@ def remove_nodes(graph, level_f='../'):
             nodes_removed_class.append(node)
         elif graph.nodes()[node]['bmi'] == -1:
             nodes_removed_na.append(node)
+
     graph.remove_nodes_from(nodes_removed_class)
     graph.remove_nodes_from(nodes_removed_na)
 
@@ -196,7 +197,9 @@ def generate_environment(level_f='../'):
 
 def generate_basic(level_f='../'):
     '''
-    Static values. Age changes a little. Used the mean.
+    Static values. Age changes a little.
+
+    For the class, we take Y2. In case the data is missing, we use Y1 from pp data frame.
     '''
     background = pd.read_csv(level_f+'data/background.csv', sep=';', header=0)
     pp = pd.read_csv(level_f+'data/pp.csv', sep=';', header=0)
@@ -205,10 +208,12 @@ def generate_basic(level_f='../'):
     age_df = background.groupby(['Child_Bosse']).mean()['Age']
     
     # Generate Class
-    pp['Class'] = pp.Class_Y2
+    pp['class'] = pp.Class_Y2
     # Fill the missing data at Class column with the data from Y1.
-    pp.Class.fillna(pp.Class_Y1, inplace=True)
-    class_df = pp.Class
+    pp['class'].fillna(pp.Class_Y1, inplace=True)
+    pp.index = pp.Child_Bosse
+    class_df = pp['class']
+
     
     gender_df.to_csv(level_f+'results/gender.csv')
     age_df.to_csv(level_f+'results/age.csv')
