@@ -199,9 +199,16 @@ def generate_basic(level_f='../'):
     Static values. Age changes a little. Used the mean.
     '''
     background = pd.read_csv(level_f+'data/background.csv', sep=';', header=0)
+    pp = pd.read_csv(level_f+'data/pp.csv', sep=';', header=0)
+
     gender_df = background.groupby(['Child_Bosse']).mean()['Gender']
     age_df = background.groupby(['Child_Bosse']).mean()['Age']
-    class_df = background.groupby(['Child_Bosse']).mean()['Class']    
+    
+    # Generate Class
+    pp['Class'] = pp.Class_Y2
+    # Fill the missing data at Class column with the data from Y1.
+    pp.Class.fillna(pp.Class_Y1, inplace=True)
+    class_df = pp.Class
     
     gender_df.to_csv(level_f+'results/gender.csv')
     age_df.to_csv(level_f+'results/age.csv')
