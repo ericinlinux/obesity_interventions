@@ -1,3 +1,8 @@
+'''
+Functions related to the diffusion spread in a social network.
+Code by: Eric Araujo
+'''
+
 import networkx as nx
 import random
 
