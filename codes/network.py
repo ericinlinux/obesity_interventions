@@ -6,7 +6,7 @@ import pandas as pd
 import re
 import random
 
-def generate_network(level_f='../'):
+def generate_network(level_f='../', label=None):
     '''
     background = pd.read_csv(data_f+'background.csv', sep=';', header=0)
     bmi = pd.read_csv(data_f+'bmi.csv', sep=';', header=0)
@@ -19,10 +19,10 @@ def generate_network(level_f='../'):
     graph = nx.DiGraph()
 
     print('Create connections...')
-    create_connections(graph=graph, level_f=level_f)
+    create_connections(graph=graph, level_f=level_f, label=label, waves='all')
 
-    print('Nodes after connections: ', len(graph.nodes()))
-    print('Edges created : ', len(graph.edges()))
+    print('Nodes after connections: #', len(graph.nodes()))
+    print('Edges created #: ', len(graph.edges()))
 
     print('\nCreate agents...')
     create_agents(graph=graph, level_f=level_f)
@@ -32,10 +32,13 @@ def generate_network(level_f='../'):
     remove_nodes(graph=graph, level_f=level_f)
 
     print('Nodes remaining after removal: #', len(graph.nodes()))
-
-    
+    print('Edges remaining after removal #: ', len(graph.edges()))
+    if label is None:
+        g_file = 'results/graph.gexf'
+    else:
+        g_file = 'results/graph_' + label + '.gexf'
     try:
-        nx.write_gexf(graph, level_f+'results/graph.gexf')
+        nx.write_gexf(graph, level_f+ g_file)
     except IOError as e:
         errno, strerror = e.args
         print("I/O error({0}): {1}".format(errno,strerror))
@@ -309,7 +312,7 @@ def generate_EI(formula_s=None, level_f='../'):
 
     return EI_dict
 
-def create_connections(graph, formula_s=None, waves='all', level_f='../'):
+def create_connections(graph, formula_s=None, label=None, waves='all', level_f='../'):
     '''
     graph: DiGraph
     formula_s: string containing a json with the weights for each variable
@@ -358,13 +361,22 @@ def create_connections(graph, formula_s=None, waves='all', level_f='../'):
 
     # Read formula to calculate the weight for the connections
     if formula_s is None:
-        formula = json.loads(open(level_f+'settings/connections.json').read())
+        try:
+            if label is None:
+                formula = json.loads(open(('{}settings/connections.json').format(level_f)).read())
+            else:
+                formula = json.loads(open(('{}settings/connections_{}.json').format(level_f, label)).read())
+        except Exception as ex:
+            print(('File {}settings/connections_{}.json does not exist!').format(level_f, label))
+            print(ex)
+            return
     else:
         try:
             formula = json.loads(formula_s)
         except:
             print('Formula provided is corrupted.')
             return
+    
 
     # Sum of all weights from the formula
     max_score = sum(formula.values())
@@ -397,7 +409,11 @@ def create_connections(graph, formula_s=None, waves='all', level_f='../'):
                 graph.add_edge(peer, destine, weight=weight)
 
     # Save the connections file in the results folder
-    connections_df.to_csv(level_f+'results/connections.csv')
+    
+    if label is None:
+        connections_df.to_csv(level_f+'results/connections.csv')
+    else:
+        connections_df.to_csv(('{0}results/connections_{1}.json').format(level_f, label))
 
     return graph
 
