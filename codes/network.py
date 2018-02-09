@@ -6,8 +6,11 @@ import pandas as pd
 import re
 import random
 
-def generate_network(level_f='../', label=None):
+def generate_network(level_f='../', label=None, formula_s=None):
     '''
+    label and formula_s are variables for the create_connections(). 
+    They are basically the file to read (label) or the string formula to customize the calculation of the edges.
+
     background = pd.read_csv(data_f+'background.csv', sep=';', header=0)
     bmi = pd.read_csv(data_f+'bmi.csv', sep=';', header=0)
     fitbit = pd.read_csv(data_f+'fitbit.csv', sep=';', header=0)
@@ -19,7 +22,7 @@ def generate_network(level_f='../', label=None):
     graph = nx.DiGraph()
 
     print('Create connections...')
-    create_connections(graph=graph, level_f=level_f, label=label, waves='all')
+    create_connections(graph=graph, level_f=level_f, label=label, formula_s=formula_s, waves='all')
 
     print('Nodes after connections: #', len(graph.nodes()))
     print('Edges created #: ', len(graph.edges()))
@@ -211,9 +214,9 @@ def generate_basic(level_f='../'):
     age_df = background.groupby(['Child_Bosse']).mean()['Age']
     
     # Generate Class
-    pp['class'] = pp.Class_Y2
+    pp['class'] = pp.Class_Y1
     # Fill the missing data at Class column with the data from Y1.
-    pp['class'].fillna(pp.Class_Y1, inplace=True)
+    pp['class'].fillna(pp.Class_Y2, inplace=True)
     pp.index = pp.Child_Bosse
     class_df = pp['class']
 
@@ -413,7 +416,7 @@ def create_connections(graph, formula_s=None, label=None, waves='all', level_f='
     if label is None:
         connections_df.to_csv(level_f+'results/connections.csv')
     else:
-        connections_df.to_csv(('{0}results/connections_{1}.json').format(level_f, label))
+        connections_df.to_csv(('{0}results/connections_{1}.csv').format(level_f, label))
 
     return graph
 
