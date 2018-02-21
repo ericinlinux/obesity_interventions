@@ -1,7 +1,7 @@
 '''
 The code below aims to simulate PA for the group of students collected in our data base.
 '''
-from network import generate_network
+from networkPA import generate_network_PA
 
 def diffuse_behavior_PA(graph, years=1, thres_PA_l = 0.02, thres_PA_h = 0.2,
                         I_PA = 0.00075):
@@ -69,4 +69,4 @@ def diffuse_behavior_PA(graph, years=1, thres_PA_l = 0.02, thres_PA_h = 0.2,
 
 if __name__ == "__main__":
     # execute only if run as a script
-    graph_all = generate_network(label='all')
+    graph_all = generate_network_PA(label='all')

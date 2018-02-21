@@ -19,6 +19,10 @@ def generate_network(level_f='../', label=None, formula_s=None):
     pp = pd.read_csv(data_f+'pp.csv', sep=';', header=0)
     pp['sum_waves'] = pp.parti_W1+pp.parti_W2+pp.parti_W3+pp.parti_W4
     '''
+    print('###############################################################')
+    print('Graph generation starting!')
+    print('Label: {}\nFormula: {}'.format(label, formula_s))
+    print('###############################################################\n')
     graph = nx.DiGraph()
 
     print('Create connections...')
@@ -191,6 +195,11 @@ def generate_demographics(level_f='../'):
 def generate_environment(level_f='../'):
     '''
     The environment variable is going to be generated randomly by now, but should be replaced later
+    
+    * Computer: [0, 1, 2, 3]
+    * Car:      [0, 1, 2]
+    * Vacation: [0, 1, 2, 3]
+    * Own room: [0, 1]
     '''
     env = pd.read_csv(level_f+'data/environment.csv', sep=';', header=0)
     env=env[['Child_Bosse','School', 'Class','Wave','GEN_FAS_computer_R','GEN_FAS_car_R','GEN_FAS_vacation_R','GEN_FAS_ownroom_R']]
