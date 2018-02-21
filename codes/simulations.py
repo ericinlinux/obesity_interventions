@@ -255,13 +255,21 @@ def diffuse_behavior(graph, intervention=None, factor=None, objective='min-overw
             env = graph.nodes()[node]['env']
             
             # Neighbors are the out-edges
+            sum_weights = 0
             for pred in graph.predecessors(node):
-                inf_PA = inf_PA + (graph.nodes()[pred]['PA_hist'][t-1] - PA)
-                inf_EI = inf_EI + (graph.nodes()[pred]['EI_hist'][t-1] - EI)
+                w_pred2node = graph.edges[pred, node]['weight']
+                sum_weights = sum_weights+w_pred2node
+                #print(w_pred2node)
+                #inf_PA = inf_PA + (graph.nodes()[pred]['PA_hist'][t-1] - PA)
+                inf_PA = inf_PA + (graph.nodes()[pred]['PA_hist'][t-1] - PA)*w_pred2node
+                inf_EI = inf_EI + (graph.nodes()[pred]['EI_hist'][t-1] - EI)*w_pred2node
+
             # Combined influence
             try:
-                inf_PA = inf_PA/len(list(graph.predecessors(node)))
-                inf_EI = inf_EI/len(list(graph.predecessors(node)))
+                #inf_PA = inf_PA/len(list(graph.predecessors(node)))
+                inf_PA = inf_PA/sum_weights
+                #inf_EI = inf_EI/len(list(graph.predecessors(node)))
+                inf_EI = inf_EI/sum_weights
             except:
                 inf_PA = 0
                 inf_EI = 0

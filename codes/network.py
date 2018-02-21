@@ -103,8 +103,8 @@ def create_agents(graph, level_f='../'):
     print('age')
     class_dict = fix_float64(class_dict)
     print('class')
-    # environment_dict = fix_float64(environment_dict)
-    # print('env')
+    environment_dict = fix_float64(environment_dict)
+    print('env')
     bmi_dict = fix_float64(bmi_dict)
     print('bmi')
     height_dict = fix_float64(height_dict)
@@ -192,8 +192,57 @@ def generate_environment(level_f='../'):
     '''
     The environment variable is going to be generated randomly by now, but should be replaced later
     '''
+    env = pd.read_csv(level_f+'data/environment.csv', sep=';', header=0)
+    env=env[['Child_Bosse','School', 'Class','Wave','GEN_FAS_computer_R','GEN_FAS_car_R','GEN_FAS_vacation_R','GEN_FAS_ownroom_R']]
+    
+    classes=[67, 71, 72, 74, 77, 78, 79, 81, 83, 86, 100, 101, 103, 121, 122, 125, 126, 127, 129, 130, 131, 133, 135, 136, 138, 139]
+    env = env[env['Class'].isin(classes)]
+    
+    df_help_missing_e = env.groupby('Child_Bosse').sum()
+    df_help_missing_e = df_help_missing_e.drop(['School', 'Class','Wave'], axis=1)
+    df_only_missing = df_help_missing_e[df_help_missing_e.isnull().sum(1)==4]
+    missing_users_index = df_only_missing.index.values
+    users_with_data_e = env[~env['Child_Bosse'].isin(missing_users_index.tolist())]
+    index_kids = users_with_data_e.Child_Bosse.unique().tolist()
+    user_list_same_waves_val = [] 
+    user_list_diff_waves_val = [] 
+    
+    for user in index_kids:
+        user_df=users_with_data_e[users_with_data_e.Child_Bosse == user]
+        if((user_df.GEN_FAS_computer_R.nunique() == 1) and (user_df.GEN_FAS_car_R.nunique()==1) and (user_df.GEN_FAS_vacation_R.nunique()==1) and (user_df.GEN_FAS_ownroom_R.nunique()==1)):
+            user_list_same_waves_val.append(user)
+        else:
+            user_list_diff_waves_val.append(user)
+
+    final_e=users_with_data_e[users_with_data_e.Wave==1]
+    col_list= list(['GEN_FAS_computer_R','GEN_FAS_car_R', 'GEN_FAS_vacation_R','GEN_FAS_ownroom_R'])
+    ncol=final_e[col_list].sum(axis=1).to_frame()
+    ncol.columns=['FAS_Score_R']
+    final_e = pd.concat([final_e, ncol], axis=1)
+    final_e = final_e[['Child_Bosse','FAS_Score_R']]
+    final_e.set_index('Child_Bosse')
+    #final dataframe containing childID and FAS_Score_R
+
+    return dict(final_e['FAS_Score_R'])
+
+
+def generate_environment_old(level_f='../'):
+    '''
+    The environment variable is going to be generated randomly by now, but should be replaced later
+    '''
+
     pp = pd.read_csv(level_f+'data/pp.csv', sep=';', header=0)
+    env = pd.read_csv(level_f+'data/environment.csv', sep=';', header=0)
+    
     list_participants = list(set(pp.Child_Bosse))
+
+    classes=[67, 71, 72, 74, 77, 78, 79, 81, 83, 86, 100, 101, 103, 121, 122, 125, 126, 127, 129, 130, 131, 133, 135, 136, 138, 139]
+    
+    env = env[env['Class'].isin(classes)]
+
+    env = env[['Child_Bosse','School', 'Class','Wave','GEN_FAS_computer_R','GEN_FAS_car_R',
+           'GEN_FAS_vacation_R','GEN_FAS_ownroom_R']]
+
     # Random generator.
     environment_dict = {k: random.uniform(0.93, 1.02) for k in list_participants}
     pd.Series(environment_dict).to_csv(level_f+'results/environment.csv')
