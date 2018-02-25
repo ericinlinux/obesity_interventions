@@ -217,20 +217,24 @@ def generate_environment(level_f='../'):
     user_list_diff_waves_val = [] 
     
     for user in index_kids:
-        user_df=users_with_data_e[users_with_data_e.Child_Bosse == user]
+        user_df = users_with_data_e[users_with_data_e.Child_Bosse == user]
         if((user_df.GEN_FAS_computer_R.nunique() == 1) and (user_df.GEN_FAS_car_R.nunique()==1) and (user_df.GEN_FAS_vacation_R.nunique()==1) and (user_df.GEN_FAS_ownroom_R.nunique()==1)):
             user_list_same_waves_val.append(user)
         else:
             user_list_diff_waves_val.append(user)
 
-    final_e=users_with_data_e[users_with_data_e.Wave==1]
-    col_list= list(['GEN_FAS_computer_R','GEN_FAS_car_R', 'GEN_FAS_vacation_R','GEN_FAS_ownroom_R'])
-    ncol=final_e[col_list].sum(axis=1).to_frame()
-    ncol.columns=['FAS_Score_R']
-    final_e = pd.concat([final_e, ncol], axis=1)
+    final_e = users_with_data_e[users_with_data_e.Wave==1]
+    col_list = list(['GEN_FAS_computer_R','GEN_FAS_car_R', 'GEN_FAS_vacation_R','GEN_FAS_ownroom_R'])
+    
+    #ncol = final_e[col_list].sum(axis=1).to_frame()
+    
+    final_e['FAS_Score_R'] = final_e['GEN_FAS_computer_R'] + final_e['GEN_FAS_vacation_R'] + final_e['GEN_FAS_car_R']*1.5 + final_e['GEN_FAS_ownroom_R']*3
+
+    # To keep the values between 0 and 2.
+    final_e.FAS_Score_R = final_e.FAS_Score_R/6
+
     final_e = final_e[['Child_Bosse','FAS_Score_R']]
     final_e.set_index('Child_Bosse')
-    #final dataframe containing childID and FAS_Score_R
 
     return dict(final_e['FAS_Score_R'])
 
