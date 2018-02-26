@@ -1,25 +1,22 @@
+
+
+from codes.networkPA import generate_network_PA
+from codes.simulatePA import diffuse_behavior_PA
+
+import networkx as nx
+import numpy as np
 import pandas as pd
+from pprint import pprint
+from random import random
+from time import time
 
-
-def get_emp_PA(metric='steps', level_f='../'):
+def acceptance_probability(old_cost, new_cost, T):
     '''
-    Return a DataFrame with the PA for the beggining and end
+    Function to define acceptance probability values for SA
     '''
-    
-    fitbit = pd.read_csv(level_f+'data/fitbit.csv', sep=';', header=0)
-    
-    original_PA = fitbit[fitbit.Wave != 4]
-    final_PA = fitbit[fitbit.Wave == 4]
-    if metric == 'steps':
-        initial_steps_df = original_PA.groupby(['Child_Bosse']).mean()['Steps_ML_imp1'] * 0.000153
-        final_steps_df = final_PA.groupby(['Child_Bosse']).mean()['Steps_ML_imp1'] * 0.000153
-    else:
-        print('Metric as MVPA still to implement...')
-        return
-
-    empirical_data = pd.DataFrame([initial_steps_df, final_steps_df], ['Initial', 'Final']).T
-
-    return empirical_data
+    delta = new_cost-old_cost
+    probability = np.exp(-delta/T)
+    return probability
 
 
 def get_neighbor(parameters):
@@ -37,8 +34,8 @@ def get_neighbor(parameters):
     minn = 0.00001
     
     max_I_PA = 0.5
-    inf_I_PA = -0.01
-    sup_I_PA = 0.01
+    inf_I_PA = -0.05
+    sup_I_PA = 0.05
     
     maxn_thres = 0.9999
     inf_thres = -0.1
@@ -68,11 +65,31 @@ def get_empirical(metric='steps', level_f='../'):
     return steps_mean_wave
 
 
-def get_error(graph, empirical):
+def get_error(graph, empirical, parameters=None, label='all', level_f='../'):
+    '''
+    Runs the simulation and calculates the difference
+    '''
 
+    if parameters is None:
+        thres_PA = random()
+        I_PA = random()
+    else:
+        thres_PA = parameters[0]
+        I_PA = parameters[1]
+    
+    #graph = generate_network_PA(level_f=level_f, label=label)
+    #print('PA hist <before>: ', nx.get_node_attributes(graph, 'PA_hist'))
+    
+    init_time = time()
+    diffuse_behavior_PA(graph, years=1, thres_PA=thres_PA, I_PA=I_PA)
+    end_time = time()
+    print('Diffuse behavior time: ', (end_time-init_time))
+    #print(parameters, '\n')
+
+    #print('PA hist <after>: ', nx.get_node_attributes(graph, 'PA_hist'))
     PA_results = {}
-    for node in G_all.nodes():
-        PA_results[node] = G_all.nodes[node]['PA_hist']
+    for node in graph.nodes():
+        PA_results[node] = graph.nodes[node]['PA_hist']
 
     PA_df = pd.DataFrame(PA_results).T
 
@@ -80,4 +97,68 @@ def get_error(graph, empirical):
     PA_sim.columns = ['W1', 'W2', 'W3', 'W4']
     empirical.columns = ['W1', 'W2', 'W3', 'W4']
     
-    return ((PA_sim - empirical)**2).sum().sum()
+    # Divided by 100 to increase the chance of acceptance of worst scenarios
+    return ((PA_sim - empirical)**2).sum().sum()/100, parameters
+
+
+def parameter_tuning(parameters=None, label='all', level_f='../'):
+    '''
+    Parameter tuning function
+    '''
+
+    # Keeping history (vectors)
+    cost_hist = list([])
+    parameters_hist = list([])
+
+    empirical_data = get_empirical(level_f=level_f)
+    original_graph = generate_network_PA(level_f=level_f, label=label)
+    
+    # Actual cost
+    old_cost, initial_parameters = get_error(graph=original_graph.copy(), empirical=empirical_data, parameters=parameters, label=label, level_f=level_f)
+
+    cost_hist.append(old_cost)
+    parameters_hist.append(initial_parameters)
+
+    T = 1.0
+    T_min = 0.01
+    # original = 0.9
+    alpha = 0.9
+    num_neighbors = 20
+    
+    parameters = initial_parameters
+
+    while T > T_min:
+        print('\nTemp: ', T)
+        i = 1
+        # original = 100
+        while i <= num_neighbors:
+            #init_time = time()
+            new_parameters = get_neighbor(parameters)
+            new_cost, new_parameters = get_error(graph=original_graph.copy(), empirical=empirical_data, parameters=new_parameters, label=label, level_f=level_f)
+            #end_time = time()
+            #print(T, i, (end_time-init_time))
+
+            if new_cost < old_cost:
+                parameters = new_parameters
+                parameters_hist.append(parameters)
+                old_cost = new_cost
+                cost_hist.append(old_cost)
+            else:
+                ap = acceptance_probability(old_cost, new_cost, T)
+                if ap > random():
+                    #print 'accepted!'
+                    parameters = new_parameters
+                    parameters_hist.append(parameters)
+                    old_cost = new_cost
+                    cost_hist.append(old_cost)
+            i += 1
+        pprint(parameters_hist[-1])
+        print(cost_hist[-1])
+        T = T*alpha
+
+    # plot_results(parameters, cost_hist, parameters_hist)
+
+    return parameters, cost_hist, parameters_hist
+
+if __name__ == "__main__":
+    parameter_tuning()
