@@ -31,7 +31,7 @@ def remove_nodes_PA(graph, level_f='../'):
 
 
 
-def generate_PA(metric='mvpa', level_f='../'):
+def generate_PA(metric='steps', level_f='../'):
     '''
     NetworkClass:       Does the class reach the treshold of >60% of participation
     Steps:              observed mean daily steps count per week    
@@ -49,6 +49,13 @@ def generate_PA(metric='mvpa', level_f='../'):
     '''
     fitbit = pd.read_csv(level_f+'data/fitbit.csv', sep=';', header=0)
     
+    steps_mean_wave = fitbit.groupby(['Child_Bosse', 'Wave']).mean()['Steps_ML_imp1'].reset_index()
+    steps_mean_wave.Steps_ML_imp1 = steps_mean_wave.Steps_ML_imp1 * 0.000153
+    steps_mean_wave = steps_mean_wave.pivot(index='Child_Bosse', columns='Wave')['Steps_ML_imp1']
+
+    return dict(steps_mean_wave[1])
+
+    '''
     # Mean of minutes from moderate to vigorous activity and steps (all imputed)
     minutes_MVPA_df = fitbit.groupby(['Child_Bosse']).mean()['Minutes_MVPA_ML_imp1']
 
@@ -64,6 +71,8 @@ def generate_PA(metric='mvpa', level_f='../'):
     else:
         print('Metric not valid! >>>', metric)
         return False
+
+    '''
 
 
 def generate_environment(level_f='../'):
