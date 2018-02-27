@@ -176,7 +176,7 @@ def grid_search(bins=10, label='all', level_f='../'):
         for i in I_PA_mesh:
             new_cost, _ = get_error(graph=original_graph.copy(), empirical=empirical_data, parameters=[t, i], label=label, level_f=level_f)
             list_solutions.append((t,i,new_cost))
-
+        print('Thresh: ', t)
     return list_solutions
 
 if __name__ == "__main__":
