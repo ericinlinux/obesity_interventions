@@ -160,5 +160,24 @@ def parameter_tuning(parameters=None, label='all', level_f='../'):
 
     return parameters, cost_hist, parameters_hist
 
+
+def grid_search(bins=10, label='all', level_f='../'):
+    '''
+    Seek the information a grid divided by the number of bins given
+    '''
+    thres_mesh = np.arange(0,1,1/bins)
+    I_PA_mesh = np.arange(0,1,1/bins)
+
+    empirical_data = get_empirical(level_f=level_f)
+    original_graph = generate_network_PA(level_f=level_f, label=label)
+
+    list_solutions = []
+    for t in thres_mesh:
+        for i in I_PA_mesh:
+            new_cost, _ = get_error(graph=original_graph.copy(), empirical=empirical_data, parameters=[t, i], label=label, level_f=level_f)
+            list_solutions.append((t,i,new_cost))
+
+    return list_solutions
+
 if __name__ == "__main__":
     parameter_tuning()
