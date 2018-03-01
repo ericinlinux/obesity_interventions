@@ -97,8 +97,12 @@ def get_error(graph, empirical, parameters=None, label='all', level_f='../'):
     PA_sim.columns = ['W1', 'W2', 'W3', 'W4']
     empirical.columns = ['W1', 'W2', 'W3', 'W4']
     
+    # Changes to penalize W4 more than the others.
+    error = ((PA_sim[['W1', 'W2', 'W3']]-empirical[['W1', 'W2', 'W3']])**2).sum().sum() + (((PA_sim.W4 - empirical.W4)*4)**2).sum().sum()
+
     # Divided by 100 to increase the chance of acceptance of worst scenarios
-    return ((PA_sim - empirical)**2).sum().sum()/100, parameters
+    # return ((PA_sim - empirical)**2).sum().sum()/100, parameters
+    return error/100, parameters
 
 
 def parameter_tuning(parameters=None, label='all', level_f='../'):

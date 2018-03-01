@@ -41,8 +41,10 @@ def diffuse_behavior_PA(graph, years=1, thres_PA = 0.2, I_PA = 0.00075):
                 inf_PA = 0
 
             # 2
-            if env == 0:
-                env = 0.0001
+            #if env == 0:
+            #    env = 0.0001
+            if env <= 0.1:
+                env = 0.1
             
             inf_PA_env = inf_PA / env if inf_PA >= 0 else inf_PA * env
             
