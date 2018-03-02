@@ -33,7 +33,7 @@ def get_neighbor(parameters):
 
     minn = 0.00001
     
-    max_I_PA = 0.5
+    max_I_PA = 0.4
     inf_I_PA = -0.05
     sup_I_PA = 0.05
     
