@@ -11,6 +11,7 @@ import pandas as pd
 import re
 import random
 from codes.network import fix_float64, create_connections, generate_basic
+from codes.interventions import get_bmi_cat
 
 def remove_nodes_PA(graph, level_f='../'):
     file = open(level_f+'settings/class.txt', 'r')
@@ -111,6 +112,18 @@ def generate_environment(level_f='../'):
     return env_dict
 
 
+def generate_bmi(level_f='../'):
+    '''
+    Created in Mar 5
+    Generate the BMI that is going to be used to classify the children 
+    in an obesity scale.
+    '''
+    bmi = pd.read_csv(level_f+'data/bmi.csv', sep=';', header=0)
+    bmi = bmi[bmi.Wave==2][['Child_Bosse', 'BMI']]
+    bmi.index = bmi.Child_Bosse
+    bmi = bmi['BMI']
+
+    return dict(bmi)
 
 def create_agents_PA(graph, level_f='../'):
     '''
@@ -129,6 +142,7 @@ def create_agents_PA(graph, level_f='../'):
     PA_dict = generate_PA(metric='steps', level_f=level_f)
     gender_dict, age_dict, class_dict = generate_basic(level_f=level_f)
     environment_dict = generate_environment(level_f=level_f)
+    bmi_dict = generate_bmi(level_f=level_f)
     
     PA_dict = fix_float64(PA_dict)
     print('PA')
@@ -140,13 +154,23 @@ def create_agents_PA(graph, level_f='../'):
     print('class')
     environment_dict = fix_float64(environment_dict)
     print('env')
+    bmi_dict = fix_float64(bmi_dict)
+    print('obesity classifier')
     
     nx.set_node_attributes(graph, values=PA_dict, name='PA')
     nx.set_node_attributes(graph, values=gender_dict, name='gender')
     nx.set_node_attributes(graph, values=age_dict, name='age')
     nx.set_node_attributes(graph, values=class_dict, name='class')
     nx.set_node_attributes(graph, values=environment_dict, name='env')
+    nx.set_node_attributes(graph, values=bmi_dict, name='bmi')
     
+    # Adding category for the nodes
+    obesity_class = {}
+    for node in graph.nodes():
+        obesity_class[node] = get_bmi_cat(gender_dict[node], age_dict[node], bmi_dict[node])
+
+    nx.set_node_attributes(graph, values=obesity_class, name='bmi_cat')
+
     return graph
 
 
