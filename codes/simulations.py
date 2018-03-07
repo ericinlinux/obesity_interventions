@@ -1,5 +1,10 @@
 '''
 Functions related to the diffusion spread in a social network.
+This is the original model version of the simulations.
+The problems of this code is that the selection of the nodes and 
+    other operations do not consider the different classes.
+Besides that, the BMI scale is not compatible to children.
+
 Code by: Eric Araujo
 '''
 
@@ -8,7 +13,9 @@ import random
 
 
 def apply_intervention(graph, factor=None, selected_nodes=[]):
-    # Apply the right intervention
+    '''
+    Reduce the EI or increase de PA according to the factor to be changed.
+    '''
     for node in selected_nodes:
         if factor == 'PA':
             graph.nodes[node]['PA'] = graph.nodes[node]['PA'] + graph.nodes[node]['PA']*0.17
@@ -22,9 +29,10 @@ def apply_intervention(graph, factor=None, selected_nodes=[]):
     return graph
 
 
-# Random selection of nodes
 def select_nodes_random(graph, factor=None, perc=0.1, level_f='../'):
-    # Select nodes by random
+    '''
+    Selection of the nodes by random
+    '''
     list_nodes = list(graph.nodes())
     num_selected = round(len(list_nodes)*perc)
 
@@ -34,9 +42,10 @@ def select_nodes_random(graph, factor=None, perc=0.1, level_f='../'):
     return apply_intervention(graph, factor=factor, selected_nodes=selected_nodes)
 
 
-# Select nodes with higher centrality
 def select_nodes_centrality(graph, factor=None, perc=0.1, level_f='../'):
-
+    '''
+    Select nodes with higher centrality
+    '''
     centrality_dict=nx.degree_centrality(graph)
     keys_sorted = sorted(centrality_dict, key=centrality_dict.get, reverse=True)
 
@@ -47,8 +56,11 @@ def select_nodes_centrality(graph, factor=None, perc=0.1, level_f='../'):
     return apply_intervention(graph, factor=factor, selected_nodes=selected_nodes)
 
 
-# Select nodes with BMI > 20
 def select_nodes_high_risk(graph, factor=None, perc=0.1, level_f='../'):
+    '''
+    Select nodes with BMI > 20
+    Not compatible with children
+    '''
     list_nodes = list(graph.nodes())
     num_selected = round(len(list_nodes)*perc)
 
@@ -64,8 +76,10 @@ def select_nodes_high_risk(graph, factor=None, perc=0.1, level_f='../'):
     return apply_intervention(graph, factor=factor, selected_nodes=selected_nodes)
 
 
-# Vulnerable nodes with env < 1
 def select_nodes_vulnerable(graph, factor=None, perc=0.1, level_f='../'):
+    '''
+    Vulnerable nodes with env > 1
+    '''
     list_nodes = list(graph.nodes())
     num_selected = round(len(list_nodes)*perc)
 
@@ -75,15 +89,15 @@ def select_nodes_vulnerable(graph, factor=None, perc=0.1, level_f='../'):
 
     selected_nodes = []
     for n in keys_sorted[0:num_selected]:
-        if env_dict[n] < 1.0:
+        if env_dict[n] > 1.0:
             selected_nodes.append(n)
 
     return apply_intervention(graph, factor=factor, selected_nodes=selected_nodes)
 
 
-# Max influence
 def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obese', level_f='../', debug=True):
     '''
+    - Max influence
     Objective is the variable we want to minize. In the original work it can be min-obese, min-overweight, min-sum-both and min-bw.
         |- min-obese:       sum of BW of people with BMI > 29.9 - sum of ORIGINAL BW of people with BMI > 29.9
         |- min-overweight:  sum BW of people with 25 < BMI <= 29.9 - sum of ORIGINAL BW of people with 25< BMI <= 29.9

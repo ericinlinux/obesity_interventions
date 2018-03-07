@@ -11,7 +11,7 @@ import pandas as pd
 import re
 import random
 from codes.network import fix_float64, create_connections, generate_basic
-from codes.interventions import get_bmi_cat
+from codes.interventionsPA import get_bmi_cat
 
 def remove_nodes_PA(graph, level_f='../'):
     file = open(level_f+'settings/class.txt', 'r')
