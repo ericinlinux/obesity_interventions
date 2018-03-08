@@ -2,6 +2,9 @@
 import numpy as np
 import random
 import networkx as nx
+import pandas as pd
+
+from codes.simulatePA import diffuse_behavior_PA
 
 def get_subgraphs_centrality(graph, level_f='./'):
     # Create a dictionary. Keys are the classes, and the values are list of students
@@ -48,20 +51,23 @@ def get_class_dictionary(graph, level_f='../'):
                                            graph.nodes[node]['gender'],
                                            graph.nodes[node]['bmi_cat'],
                                            graph.nodes[node]['env'],
-                                           centrality_dict[node]))
+                                           centrality_dict[node],
+                                           graph.nodes[node]['bmi']))
     return class_dictionary
 
 
-def apply_intervention(graph, selected_nodes=[]):
+def apply_intervention(graph, selected_nodes=[], debug=True):
     '''
     Apply the intervention for the PA
     '''
     for node in selected_nodes:
         # 17%
-        print('Node #{} - old PA: {}'.format(node,graph.nodes[node]['PA']))
+        if debug:
+            print('Node #{} - old PA: {}'.format(node,graph.nodes[node]['PA']))
         graph.nodes[node]['PA'] = graph.nodes[node]['PA']*1.17
         graph.nodes()[node]['PA_hist'] = [graph.nodes()[node]['PA']]
-        print('Node #{} - new PA: {}'.format(node,graph.nodes[node]['PA']))
+        if debug:
+            print('Node #{} - new PA: {}'.format(node,graph.nodes[node]['PA']))
     return graph
 
 
@@ -95,12 +101,6 @@ def apply_intervention_random_nodes(graph, perc=0.1, level_f='../'):
     
 
 
-'''
-CENTRALITY FUNCTIONS
-'''
-
-
-
 def apply_interventions_centrality(graph, perc=0.1, level_f='../'):
     '''
     Select nodes with higher centrality
@@ -130,150 +130,134 @@ def apply_interventions_centrality(graph, perc=0.1, level_f='../'):
     return apply_intervention(graph, selected_nodes=list_selected)
 
 
-# Select nodes with BMI > 20
-def select_nodes_high_risk(graph, factor=None, perc=0.1, level_f='../'):
-    list_nodes = list(graph.nodes())
-    num_selected = round(len(list_nodes)*perc)
 
-    BMI_dict = {node: graph.nodes()[node]['BMI_hist'][0] for node in list_nodes}
+def apply_interventions_high_risk(graph, perc=0.1, level_f='../'):
+    '''
+    Select nodes with higher BMI
+    '''
+    list_selected = []
 
-    keys_sorted = sorted(BMI_dict, key=BMI_dict.get, reverse=True)
+    class_dictionary = get_class_dictionary(graph, level_f)
+    #print(class_dictionary)
+    print('------------------------------------------------------------------')
+    print('Getting {0}% of the nodes for high risk intervention (BMI)'.format(perc))
+    print('------------------------------------------------------------------')
 
-    selected_nodes = []
-    for n in keys_sorted[0:num_selected]:
-        if BMI_dict[n] > 20:
-            selected_nodes.append(n)
+    for c, data in class_dictionary.items():
+        
+        num_selected = round(len(data)*perc)
+        total = len(data)
+        # Select the info about centrality and order the list
+        bmi_list = [(item[0],item[5]) for item in data]
+        #print(bmi_list)
+        bmi_list.sort(key=lambda tup: tup[1],reverse=True)
+        
+        selected_nodes = bmi_list[0:num_selected]
+        selected_nodes = [item[0] for item in selected_nodes]
+        list_selected = list_selected + selected_nodes    
+        print('Class {}: #{} nodes'.format(c,num_selected))
+        print('{0}'.format(selected_nodes))
 
-    return apply_intervention(graph, factor=factor, selected_nodes=selected_nodes)
+    return apply_intervention(graph, selected_nodes=list_selected)
 
 
-# Vulnerable nodes with env < 1
-def select_nodes_vulnerable(graph, factor=None, perc=0.1, level_f='../'):
-    list_nodes = list(graph.nodes())
-    num_selected = round(len(list_nodes)*perc)
+def apply_interventions_vulnerability(graph, perc=0.1, level_f='../'):
+    '''
+    Select nodes with higher BMI
+    '''
+    list_selected = []
 
-    env_dict = {node: graph.nodes()[node]['env'] for node in list_nodes}
+    class_dictionary = get_class_dictionary(graph, level_f)
+    #print(class_dictionary)
+    print('------------------------------------------------------------------')
+    print('Getting {0}% of the nodes for high risk intervention (BMI)'.format(perc))
+    print('------------------------------------------------------------------')
 
-    keys_sorted = sorted(env_dict, key=env_dict.get, reverse=False)
+    for c, data in class_dictionary.items():
+        
+        num_selected = round(len(data)*perc)
+        total = len(data)
+        # Select the info about centrality and order the list
+        env_list = [(item[0],item[5]) for item in data]
+        #print(env_list)
+        env_list.sort(key=lambda tup: tup[1],reverse=True)
+        
+        selected_nodes = env_list[0:num_selected]
+        selected_nodes = [item[0] for item in selected_nodes]
+        list_selected = list_selected + selected_nodes    
+        print('Class {}: #{} nodes'.format(c,num_selected))
+        print('{0}'.format(selected_nodes))
 
-    selected_nodes = []
-    for n in keys_sorted[0:num_selected]:
-        if env_dict[n] < 1.0:
-            selected_nodes.append(n)
+    return apply_intervention(graph, selected_nodes=list_selected)
 
-    return apply_intervention(graph, factor=factor, selected_nodes=selected_nodes)
 
 
 # Max influence
-def select_nodes_max_influence(graph, factor=None, perc=0.1, objective='min_obese', level_f='../', debug=True):
+def apply_intervention_max_influence(graph, perc=0.1, years=1, thres_PA = 0.2, I_PA = 0.00075, level_f='../'):
     '''
-    Objective is the variable we want to minize. In the original work it can be min-obese, min-overweight, min-sum-both and min-bw.
-        |- min-obese:       sum of BW of people with BMI > 29.9 - sum of ORIGINAL BW of people with BMI > 29.9
-        |- min-overweight:  sum BW of people with 25 < BMI <= 29.9 - sum of ORIGINAL BW of people with 25< BMI <= 29.9
-        |- min-sum-both:    sum BW of people with BMI > 25 - sum of ORIGINAL BW of people with BMI > 25  
-        |- min-bw:          sum BW of all people - sum ORIGINAL BW of all people
+    Objective is to maximize the PA of the whole network.
     '''
-    if debug:
-        print('\n#######################################')
-        print('Max-influence started!')
-        print('Objective function: ', objective)
-        print('#######################################\n')
+    
+    all_selected = []
+    class_dictionary = get_class_dictionary(graph, level_f)
+    
+    print('------------------------------------------------------------------')
+    print('Getting {0}% of the nodes for maximum influence'.format(perc))
+    print('------------------------------------------------------------------')
 
-    list_nodes = list(graph.nodes())
-    num_selected = round(len(list_nodes)*perc)
-    
-    if debug:
-        print('This max-influence simulation is for a network with {0} nodes and {1} edges'.format(len(graph.nodes()), len(graph.edges())))
-        print('Number of nodes to select: ', num_selected)
-    
-    selected_nodes = []
-    
-    while len(selected_nodes) < num_selected:
+    for c, data in class_dictionary.items():
+        print('\nClass {}: Starting'.format(c))
+        print('--------------------------------')
+        num_selected = round(len(data)*perc)
+        total = len(data)
         
-        # check the available nodes in the 
-        available_nodes = list(set(list_nodes) - set(selected_nodes))
+        selected_nodes = []
         
-        impact_nodes = {}
-
-        for node in available_nodes:
-            # copy graph to reset the nodes
-            g = graph.copy()
-
-            # append without altering selected nodes list...
-            temp_list = selected_nodes + [node]
-            apply_intervention(g, factor=factor, selected_nodes=temp_list)
-            diffuse_behavior(g, intervention=None, level_f=level_f, debug=False)
-
-            # Get nodes to calculate the average BW
-            list_obese=[]
-            list_overweight = []
-            list_sum_both = []
-            list_all = []
-            BW_obese = 0
-            BW_overweight = 0
-            BW_sum_both = 0
-            BW_all = 0
-
+        while len(selected_nodes) < num_selected:
+            node_n=len(selected_nodes)+1
             
-            for n in g.nodes():
-                BMI_node = g.nodes()[n]['BMI_hist'][-1]
-                BW_init = g.nodes()[n]['BW_hist'][0]
-                BW_final = g.nodes()[n]['BW_hist'][-1]
-                BW_diff = BW_final - BW_init
-                
-                #if debug:
-                #    print('\tNode {0}: \t BW initial {1}\t BW diff {2}'.format(n, BW_init, BW_diff))
-                
-                #if BMI_node > 29.9:
-                if BMI_node > 20.9:
-                    #print('Found node obese!')
-                    list_obese.append(n)
-                    list_all.append(n)
-                    list_sum_both.append(n)
+            print('Class {}: Selecting #{} node'.format(c, node_n))
+            
+            # All nodes in this subgraph
+            list_nodes = [item[0] for item in data]
+            
+            # check the available nodes in the 
+            available_nodes = list(set(list_nodes) - set(selected_nodes))
+            
+            impact_nodes = {}
+
+            for node in available_nodes:
+                # copy graph to reset the nodes
+                g = graph.subgraph(list_nodes).copy()
+
+                # append without altering selected nodes list...
+                temp_list = selected_nodes + [node]
+                apply_intervention(g, selected_nodes=temp_list, debug=False)
+                diffuse_behavior_PA(g, years=years, thres_PA=thres_PA, I_PA=I_PA)
+
+                # Calculate impact
+                sum_diff_PA = 0
+
+                for n in g.nodes():
+                    #final_PA = nx.get_node_attributes(g,'PA_hist')[968]
+                    final_PA = g.nodes()[n]['PA_hist'][-1]
+                    initial_PA = g.nodes()[n]['PA_hist'][0]
                     
-                    BW_obese += BW_diff
-                    BW_all += BW_diff
-                    BW_sum_both += BW_diff
+                    sum_diff_PA = sum_diff_PA + (final_PA - initial_PA)
+                
+                impact_nodes[node] = sum_diff_PA
+            
+            #print('Impact of all nodes:')
+            #print(pd.Series(impact_nodes).sort_values(ascending=False))
 
-                #elif BMI_node > 25 and BMI_node <= 29.9:
-                elif BMI_node > 18.0 and BMI_node <= 20.9:
-                    list_overweight.append(n)
-                    list_all.append(n)
-                    list_sum_both.append(n)
-
-                    BW_overweight += BW_diff
-                    BW_all += BW_diff
-                    BW_sum_both += BW_diff
-                else:
-                    list_all.append(n)
-                    BW_all += BW_diff
-
-            # Sum up the impacts caused in the network
-            if debug:
-                print('Impact node #{0}: \tobese: {1:.4f} \toverweight: {2:.4f} \tboth: {3:.4f} \tall: {4:.4f} '.format(node, BW_obese, BW_overweight, BW_sum_both, BW_all))
-
-            if objective == 'min-obese':
-                impact_nodes[node] = BW_obese
-            elif objective == 'min-overweight':
-                impact_nodes[node] = BW_overweight
-            elif objective == 'min-sum-both':
-                impact_nodes[node] = BW_sum_both
-            else:
-                impact_nodes[node] = BW_all
-
-        # Get the nodes sorted by the BW
-        keys_sorted = sorted(impact_nodes, key=impact_nodes.get, reverse=False)
-        
-        if debug:
-            print('Keys in order of impact: ', keys_sorted)
-        
-        selected_nodes.append(keys_sorted[0])
-
-        if debug:
-            print('Node #{0} selected: {1} with an BW impact of {2}!\n'.format(len(selected_nodes), keys_sorted[0], impact_nodes[keys_sorted[0]]))
-    if debug:
-        print('Applying interventions for the nodes in the list: {}\n'.format(selected_nodes))
-    return apply_intervention(graph, factor=factor, selected_nodes=selected_nodes)
+            # Get the nodes sorted by the BW
+            keys_sorted = sorted(impact_nodes, key=impact_nodes.get, reverse=True)
+            
+            selected_nodes.append(keys_sorted[0])
+            all_selected.append(keys_sorted[0])
+            print('Selected node: {}'.format(keys_sorted[0]))
+            
+    return apply_intervention(graph, selected_nodes=all_selected)
 
 
 def get_bmi_cat(gender,age,bmi):
