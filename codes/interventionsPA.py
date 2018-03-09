@@ -71,7 +71,7 @@ def apply_intervention(graph, selected_nodes=[], debug=False):
     return graph
 
 
-def apply_intervention_random_nodes(graph, perc=0.1, level_f='../'):
+def apply_intervention_random_nodes(graph, perc=0.1, level_f='../', debug=False):
     '''
     Random selection of nodes based purely in the percentage
     '''
@@ -91,12 +91,10 @@ def apply_intervention_random_nodes(graph, perc=0.1, level_f='../'):
         children = [item[0] for item in data]
         
         list_selected = list_selected + random.sample(children, num_selected)
-        
-        print('Class {}: #{} nodes'.format(c,num_selected))
-        # print('{0}'.format(list_selected))
+        if debug:
+            print('Class {}: #{} nodes'.format(c,num_selected))
+            print('{0}'.format(list_selected))
 
-    # Return graph with updated values
-    #return list_selected
     return apply_intervention(graph, selected_nodes=list_selected)
     
 
@@ -124,8 +122,9 @@ def apply_interventions_centrality(graph, perc=0.1, level_f='../', debug=False):
         selected_nodes = centrality_list[0:num_selected]
         selected_nodes = [item[0] for item in selected_nodes]
         list_selected = list_selected + selected_nodes    
-        print('Class {}: #{} nodes'.format(c,num_selected))
+        
         if debug:
+            print('Class {}: #{} nodes'.format(c,num_selected))
             print('{0}'.format(selected_nodes))
 
     return apply_intervention(graph, selected_nodes=list_selected)
@@ -156,8 +155,9 @@ def apply_interventions_high_risk(graph, perc=0.1, level_f='../', debug=False):
         selected_nodes = bmi_list[0:num_selected]
         selected_nodes = [item[0] for item in selected_nodes]
         list_selected = list_selected + selected_nodes    
-        print('Class {}: #{} nodes'.format(c,num_selected))
+        
         if debug:
+            print('Class {}: #{} nodes'.format(c,num_selected))
             print('{0}'.format(selected_nodes))
 
     return apply_intervention(graph, selected_nodes=list_selected)
@@ -187,8 +187,9 @@ def apply_interventions_vulnerability(graph, perc=0.1, level_f='../', debug=Fals
         selected_nodes = env_list[0:num_selected]
         selected_nodes = [item[0] for item in selected_nodes]
         list_selected = list_selected + selected_nodes    
-        print('Class {}: #{} nodes'.format(c,num_selected))
+        
         if debug:
+            print('Class {}: #{} nodes'.format(c,num_selected))
             print('{0}'.format(selected_nodes))
 
     return apply_intervention(graph, selected_nodes=list_selected)
@@ -196,7 +197,7 @@ def apply_interventions_vulnerability(graph, perc=0.1, level_f='../', debug=Fals
 
 
 # Max influence
-def apply_intervention_max_influence(graph, perc=0.1, years=1, thres_PA = 0.2, I_PA = 0.00075, level_f='../'):
+def apply_intervention_max_influence(graph, perc=0.1, years=1, thres_PA = 0.2, I_PA = 0.00075, level_f='../', debug=False):
     '''
     Objective is to maximize the PA of the whole network.
     '''
@@ -209,8 +210,9 @@ def apply_intervention_max_influence(graph, perc=0.1, years=1, thres_PA = 0.2, I
     print('------------------------------------------------------------------')
 
     for c, data in class_dictionary.items():
-        print('\nClass {}: Starting'.format(c))
-        print('--------------------------------')
+        if debug:
+            print('\nClass {}: Starting'.format(c))
+            print('--------------------------------')
         num_selected = round(len(data)*perc)
         total = len(data)
         
@@ -218,8 +220,8 @@ def apply_intervention_max_influence(graph, perc=0.1, years=1, thres_PA = 0.2, I
         
         while len(selected_nodes) < num_selected:
             node_n=len(selected_nodes)+1
-            
-            print('Class {}: Selecting #{} node'.format(c, node_n))
+            if debug:
+                print('Class {}: Selecting #{} node'.format(c, node_n))
             
             # All nodes in this subgraph
             list_nodes = [item[0] for item in data]
@@ -258,7 +260,8 @@ def apply_intervention_max_influence(graph, perc=0.1, years=1, thres_PA = 0.2, I
             
             selected_nodes.append(keys_sorted[0])
             all_selected.append(keys_sorted[0])
-            print('Selected node: {}'.format(keys_sorted[0]))
+            if debug:
+                print('Selected node: {}'.format(keys_sorted[0]))
             
     return apply_intervention(graph, selected_nodes=all_selected)
 
