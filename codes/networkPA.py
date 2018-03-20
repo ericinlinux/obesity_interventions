@@ -84,6 +84,8 @@ def generate_environment(level_f='../'):
     * Car:      [0, 1, 2]
     * Vacation: [0, 1, 2, 3]
     * Own room: [0, 1]
+    0 -> worse
+    2 -> better
     '''
     env = pd.read_csv(level_f+'data/environment.csv', sep=';', header=0)
     env = env[['Child_Bosse', 'School', 'Class', 'Wave', 'GEN_FAS_computer_R',

@@ -151,7 +151,8 @@ def apply_interventions_high_risk(graph, perc=0.1, level_f='../', debug=False):
         bmi_list = [(item[0],item[5]) for item in data]
         #print(bmi_list)
         bmi_list.sort(key=lambda tup: tup[1],reverse=True)
-        
+        if debug:
+            print(bmi_list)
         selected_nodes = bmi_list[0:num_selected]
         selected_nodes = [item[0] for item in selected_nodes]
         list_selected = list_selected + selected_nodes    
@@ -170,6 +171,8 @@ def apply_interventions_vulnerability(graph, perc=0.1, level_f='../', debug=Fals
     list_selected = []
 
     class_dictionary = get_class_dictionary(graph, level_f)
+    #if debug:
+    #    print(class_dictionary)
     #print(class_dictionary)
     print('------------------------------------------------------------------')
     print('Getting {0}% of the nodes for high risk intervention (BMI)'.format(perc))
@@ -180,10 +183,12 @@ def apply_interventions_vulnerability(graph, perc=0.1, level_f='../', debug=Fals
         num_selected = round(len(data)*perc)
         total = len(data)
         # Select the info about centrality and order the list
-        env_list = [(item[0],item[5]) for item in data]
+        env_list = [(item[0],item[3]) for item in data]
         #print(env_list)
-        env_list.sort(key=lambda tup: tup[1],reverse=True)
-        
+        # The lower the worse the environment
+        env_list.sort(key=lambda tup: tup[1],reverse=False)
+        if debug:
+            print(env_list)
         selected_nodes = env_list[0:num_selected]
         selected_nodes = [item[0] for item in selected_nodes]
         list_selected = list_selected + selected_nodes    
