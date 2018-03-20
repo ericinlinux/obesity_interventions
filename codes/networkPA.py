@@ -175,7 +175,7 @@ def create_agents_PA(graph, level_f='../'):
 
 
 
-def generate_network_PA(level_f='../', label=None, formula_s=None):
+def generate_network_PA(level_f='../', label=None, formula_s=None, debug=False):
     '''
     label and formula_s are variables for the create_connections(). 
     They are basically the file to read (label) or the string formula to customize the calculation of the edges.
@@ -193,22 +193,24 @@ def generate_network_PA(level_f='../', label=None, formula_s=None):
     print('Label: {}\nFormula: {}'.format(label, formula_s))
     print('###############################################################\n')
     graph = nx.DiGraph()
-
-    print('Create connections...')
+    if debug:
+        print('Create connections...')
     create_connections(graph=graph, level_f=level_f, label=label, formula_s=formula_s, waves='all')
 
-    print('Nodes after connections: #', len(graph.nodes()))
-    print('Edges created #: ', len(graph.edges()))
+    if debug:
+        print('Nodes after connections: #', len(graph.nodes()))
+        print('Edges created #: ', len(graph.edges()))
 
-    print('\nCreate agents...')
+        print('\nCreate agents...')
     create_agents_PA(graph=graph, level_f=level_f)
 
     # Comment this if you want to keep all the nodes
-    print('Removing nodes not in the specified classes...')
+    if debug:
+        print('Removing nodes not in the specified classes...')
     remove_nodes_PA(graph=graph, level_f=level_f)
-
-    print('Nodes remaining after removal: #', len(graph.nodes()))
-    print('Edges remaining after removal #: ', len(graph.edges()))
+    if debug:
+        print('Nodes remaining after removal: #', len(graph.nodes()))
+        print('Edges remaining after removal #: ', len(graph.edges()))
     if label is None:
         g_file = 'results/graph.gexf'
     else:

@@ -94,6 +94,11 @@ Each intervention that generates random nodes is run 100 times to garantee that 
 
 [2] Giabbanelli, Philippe J., et al. "Modeling the influence of social networks and environment on energy balance and obesity." Journal of Computational Science 3.1 (2012): 17-27.
 
+## Children metabolism
+
+https://www.tandfonline.com/doi/full/10.1080/07315724.1998.10718771?scroll=top&needAccess=true
+https://academic.oup.com/ajcn/article/80/2/365/4690319
+http://www.voedingscentrum.nl/professionals/kindervoeding-0-4-jaar/babyenkindervoeding/bmi-jongens-en-meisjes.aspx
 
 
 
